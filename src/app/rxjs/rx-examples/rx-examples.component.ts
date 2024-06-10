@@ -1,6 +1,6 @@
-import {AfterViewInit, Component} from '@angular/core';
-import {combineLatestWith, forkJoin, fromEvent, interval, mergeMap, of, timer} from "rxjs";
-import {fromPromise} from "rxjs/internal/observable/innerFrom";
+import {AfterViewInit, Component, ElementRef, inject, ViewChild} from '@angular/core';
+import {debounceTime, distinctUntilChanged, fromEvent, interval, map, Observable, of, startWith, switchMap} from "rxjs";
+import {HttpClient} from "@angular/common/http";
 
 @Component({
   selector: 'app-rx-examples',
@@ -28,6 +28,10 @@ export class RxExamplesComponent implements AfterViewInit {
   // tap - Used to perform side-effects for notifications from the source observable
   // delay - Delays the emission of items from the source Observable by a given timeout or until a given Date
   // take - Emits only the first count values emitted by the source Observable
+  // startWith - Returns an observable that, at the moment of subscription, will synchronously emit all values provided to this operator, then subscribe to the source and mirror all of its emissions to subscribers
+  // debounceTime - Emits a notification from the source Observable only after a particular time span has passed without another source emission
+  // throttleTime - Emits a value from the source Observable, then ignores subsequent source
+  // distinctUntilChanged - Returns a result Observable that emits all values pushed by the source observable if they are distinct in comparison to the last value the result observable emitted
 
   // merge - Creates an output Observable which concurrently emits all values from every given input Observable
   // concat - Creates an output Observable which sequentially emits all values from the first given Observable and then moves on to the next
@@ -40,11 +44,20 @@ export class RxExamplesComponent implements AfterViewInit {
   // switchMap - Projects each source value to an Observable which is merged in the output Observable, emitting values only from the most recently projected Observable
 
   // forkJoin - Accepts an Array of ObservableInput or a dictionary Object of ObservableInput and returns an Observable that emits either an array of values in the exact same order as the passed array, or a dictionary of values in the same shape as the passed dictionary
+  // shareReplay - Share source and replay specified number of emissions on subscription
+
+  // https://rxjs.dev/operator-decision-tree
+
+  @ViewChild("search")
+  queryInput!: ElementRef<HTMLInputElement>;
+
+  private httpClient = inject(HttpClient);
 
   ngAfterViewInit(): void {
     const multiplyBy = (multiplier: number) => (value: number) => value * multiplier;
     const isEven = (value: number) => value % 2 === 0;
     const sum = (accumulator: number, currentValue: number) => accumulator + currentValue;
+    const url = 'http://localhost:3000/books';
 
     /*interval(1_000)
       .pipe(
@@ -88,13 +101,13 @@ export class RxExamplesComponent implements AfterViewInit {
         next: value => console.log(value)
       });*/
 
-   /* interval(1_000)
-      .pipe(
-        combineLatestWith(interval(1_000))
-      )
-      .subscribe({
-        next: value => console.log(value)
-      });*/
+    /* interval(1_000)
+       .pipe(
+         combineLatestWith(interval(1_000))
+       )
+       .subscribe({
+         next: value => console.log(value)
+       });*/
 
     /*const source1$ = fromEvent(document, 'click');
     const source2$ = interval(1_000).pipe(take(3));
@@ -141,15 +154,73 @@ export class RxExamplesComponent implements AfterViewInit {
         next: value => console.log(value)
       });*/
 
-
-    const url = 'http://localhost:3000/books';
-    fromPromise(fetch(url))
+    /*fromPromise(fetch(url))
       .pipe(
         mergeMap(response => response.json())
       )
       .subscribe({
         next: value => console.log(value)
+      });*/
+
+    /*const books$ = this.getClient(url)
+      .pipe(
+        tap(value => console.log('Executing request')),
+        shareReplay()
+      )
+
+    books$.subscribe({
+      next: value => console.log(value),
+      error: err => console.log('Error: ' + err)
+    });
+    // .unsubscribe();
+
+    books$.subscribe({
+      next: value => console.log(value),
+      error: err => console.log('Error: ' + err)
+    });*/
+
+    fromEvent(this.queryInput.nativeElement, 'keyup')
+      .pipe(
+        debounceTime(500),
+        //throttleTime(1_000),
+        map(keyboardEvent => keyboardEvent.target as HTMLInputElement),
+        map(input => input.value),
+        distinctUntilChanged(),
+        // mergeMap(queryText => this.createTitleQuery(queryText))
+        switchMap(queryText => this.createTitleQuery(queryText)),
+        startWith([{info: 'no results'}])
+      )
+      .subscribe({
+        next: value => console.log(value),
+        error: err => console.log('Error: ' + err)
       });
+
+  }
+
+  createTitleQuery<T>(queryText: string): Observable<T> {
+    const url = `http://localhost:3000/books?title_like=${queryText}`;
+    //return this.getClient(url);
+    return this.httpClient.get<T>(url);
+  }
+
+  getClient<T>(url: string): Observable<T> {
+    return new Observable(observer => {
+      const controller = new AbortController();
+      fetch(url, {signal: controller.signal})
+        .then(response => {
+          if (response.status >= 200 && response.status <= 299) {
+            response.json()
+              .then(json => {
+                observer.next(json as T);
+                observer.complete();
+              })
+          } else {
+            observer.error('Request failed with status: ' + response.status);
+          }
+        })
+        .catch(error => observer.error(error));
+      return () => controller.abort();
+    });
   }
 
   basics(): void {

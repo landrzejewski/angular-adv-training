@@ -1,7 +1,9 @@
-import {Injectable} from "@angular/core";
+export interface AuthService {
 
-@Injectable({
-  providedIn: 'root'
-})
-export class AuthService {
+  login(username: string, password: string): void;
+
+  logout(): void;
+
+  isAuthenticated(): boolean;
+
 }

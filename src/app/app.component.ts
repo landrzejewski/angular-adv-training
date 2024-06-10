@@ -1,13 +1,21 @@
-import {Component, Inject, Optional} from '@angular/core';
+import {Component, inject} from '@angular/core';
 import {RouterLink, RouterOutlet} from '@angular/router';
 import {NgComponentOutlet} from "@angular/common";
-import {AuthService} from "./security/auth.service";
+import {FakeAuthService} from "./security/fake-auth.service";
+import {AUTH_SERVICE} from "./di/tokens";
+import {isAuthenticated} from "./di/is-authenticated";
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [RouterOutlet, RouterLink, NgComponentOutlet],
-  providers: [AuthService],
+  providers: [
+    {
+      // provide: 'authService',
+      provide: AUTH_SERVICE,
+      useClass: FakeAuthService
+    }
+  ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -25,7 +33,13 @@ export class AppComponent {
 
    */
 
-  constructor(@Optional() private auth: AuthService) {
+  /*constructor(@Optional() /!*@Inject('authService')*!/ @Inject(AUTH_SERVICE) private auth: AuthService) {
+  }*/
+
+  private authService = inject(AUTH_SERVICE, {optional: true});
+
+  constructor() {
+    console.log(isAuthenticated());
   }
 
   async showConfirmation() {

@@ -39,7 +39,7 @@ export class AppComponent {
   private authService = inject(AUTH_SERVICE, {optional: true});
 
   constructor() {
-    console.log(isAuthenticated());
+    // console.log(isAuthenticated());
   }
 
   async showConfirmation() {

@@ -1,5 +1,5 @@
 import {AfterViewInit, Component} from '@angular/core';
-import {concatMap, fromEvent, interval, of, take} from "rxjs";
+import {combineLatestWith, forkJoin, fromEvent, interval, of, timer} from "rxjs";
 
 @Component({
   selector: 'app-rx-examples',
@@ -18,6 +18,7 @@ export class RxExamplesComponent implements AfterViewInit {
   //         or creates an Observable that emits sequential numbers every specified interval of time with initial delay
   // range - Creates an Observable that emits a sequence of numbers within a specified range
   // fromEvent - Creates an Observable that emits events of a specific type coming from the given event target
+  // fromPromise - Crates an Observable from Promise
 
   // map - Applies a given project function to each value emitted by the source Observable, and emits the resulting values as an Observable
   // filter - Filter items emitted by the source Observable by only emitting those that satisfy a specified predicate
@@ -29,9 +30,15 @@ export class RxExamplesComponent implements AfterViewInit {
 
   // merge - Creates an output Observable which concurrently emits all values from every given input Observable
   // concat - Creates an output Observable which sequentially emits all values from the first given Observable and then moves on to the next
+  // zipWith - Subscribes to the source, and the observable inputs provided as arguments, and combines their values, by index, into arrays
+  // combineLatestWith - Combines multiple Observables to create an Observable whose values are calculated from the latest values of each of its input Observables
+
   // mergeMap - Projects each source value to an Observable which is merged in the output Observable
   // concatMap - Projects each source value to an Observable which is merged in the output Observable, in a serialized fashion waiting for each one to complete before merging the next
+  // exhaustMap - Projects each source value to an Observable which is merged in the output Observable only if the previous projected Observable has completed
+  // switchMap - Projects each source value to an Observable which is merged in the output Observable, emitting values only from the most recently projected Observable
 
+  // forkJoin - Accepts an Array of ObservableInput or a dictionary Object of ObservableInput and returns an Observable that emits either an array of values in the exact same order as the passed array, or a dictionary of values in the same shape as the passed dictionary
 
   ngAfterViewInit(): void {
     const multiplyBy = (multiplier: number) => (value: number) => value * multiplier;
@@ -72,6 +79,22 @@ export class RxExamplesComponent implements AfterViewInit {
         next: value => console.log('Value: ' + value)
       });*/
 
+    /*of(1, 2, 3, 4)
+      .pipe(
+        zipWith(of(5, 7))
+      )
+      .subscribe({
+        next: value => console.log(value)
+      });*/
+
+   /* interval(1_000)
+      .pipe(
+        combineLatestWith(interval(1_000))
+      )
+      .subscribe({
+        next: value => console.log(value)
+      });*/
+
     /*const source1$ = fromEvent(document, 'click');
     const source2$ = interval(1_000).pipe(take(3));
     source1$.pipe(
@@ -90,6 +113,32 @@ export class RxExamplesComponent implements AfterViewInit {
         next: value => console.log(value)
       });*/
 
+    /*const source1$ = fromEvent(document, 'click');
+    const source2$ = interval(1_000).pipe(take(3));
+    source1$.pipe(
+      exhaustMap(event => source2$)
+    )
+      .subscribe({
+        next: value => console.log(value)
+      });*/
+
+    /*const source1$ = fromEvent(document, 'click');
+    const source2$ = interval(1_000).pipe(take(3));
+    source1$.pipe(
+      switchMap(event => source2$)
+    )
+      .subscribe({
+        next: value => console.log(value)
+      });*/
+
+    /*forkJoin({
+      one: of(1, 2, 3),
+      two: Promise.resolve(8),
+      three: timer(4_000)
+    })
+      .subscribe({
+        next: value => console.log(value)
+      });*/
 
   }
 

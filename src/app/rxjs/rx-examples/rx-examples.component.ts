@@ -1,5 +1,6 @@
 import {AfterViewInit, Component} from '@angular/core';
-import {combineLatestWith, forkJoin, fromEvent, interval, of, timer} from "rxjs";
+import {combineLatestWith, forkJoin, fromEvent, interval, mergeMap, of, timer} from "rxjs";
+import {fromPromise} from "rxjs/internal/observable/innerFrom";
 
 @Component({
   selector: 'app-rx-examples',
@@ -140,6 +141,15 @@ export class RxExamplesComponent implements AfterViewInit {
         next: value => console.log(value)
       });*/
 
+
+    const url = 'http://localhost:3000/books';
+    fromPromise(fetch(url))
+      .pipe(
+        mergeMap(response => response.json())
+      )
+      .subscribe({
+        next: value => console.log(value)
+      });
   }
 
   basics(): void {

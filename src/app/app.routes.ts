@@ -11,6 +11,7 @@ export const routes: Routes = [
     loadChildren: async () => {
       let path = await import("./payments/payments.routes")
       return path.routes;
-    }
+    },
+    providers: [] // pozwala na zdefiniowanie zależności dla danej ścieżki współdzielonych np. przez wiele komponentów (jak w przypadku modułów)
   }
 ];

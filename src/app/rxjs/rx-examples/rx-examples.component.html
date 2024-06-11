@@ -1,2 +1,7 @@
 <p>rx-examples</p>
 Books search: <input name="query" #search>
+
+<!--<div *ngFor="let book of books$ | async"> async provides unsubscribe automatuiclly-->
+<div *ngFor="let book of books">
+  {{book.title}}
+</div>

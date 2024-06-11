@@ -1,11 +1,28 @@
 import {AfterViewInit, Component, ElementRef, inject, ViewChild} from '@angular/core';
-import {debounceTime, distinctUntilChanged, fromEvent, interval, map, Observable, of, startWith, switchMap} from "rxjs";
+import {
+  debounceTime,
+  distinctUntilChanged,
+  fromEvent,
+  interval,
+  map,
+  Observable,
+  of,
+  ReplaySubject,
+  startWith, Subject,
+  switchMap
+} from "rxjs";
 import {HttpClient} from "@angular/common/http";
+import {debug, LoggingLevel, setLoggingLevel} from "./debug.operator";
+import {BookModel} from "./book.model";
+import {AsyncPipe, NgForOf} from "@angular/common";
 
 @Component({
   selector: 'app-rx-examples',
   standalone: true,
-  imports: [],
+  imports: [
+    AsyncPipe,
+    NgForOf
+  ],
   templateUrl: './rx-examples.component.html',
   styleUrl: './rx-examples.component.css'
 })
@@ -47,13 +64,96 @@ export class RxExamplesComponent implements AfterViewInit {
   // shareReplay - Share source and replay specified number of emissions on subscription
 
   // https://rxjs.dev/operator-decision-tree
+  // https://github.com/rxjs-debug/rxjs-debug
+  // https://medium.com/@filipemendes_73527/rxjs-debugger-an-alternative-way-to-debug-rxjs-observables-eb6d4b7fef6c
 
   @ViewChild("search")
   queryInput!: ElementRef<HTMLInputElement>;
 
   private httpClient = inject(HttpClient);
 
+  // books$!: Observable<BookModel[]>;
+  books: BookModel[] = [];
+  destroy$ = new Subject<void>();
+
   ngAfterViewInit(): void {
+    fromEvent(this.queryInput.nativeElement, 'keyup')
+      .pipe(
+        debounceTime(500),
+        //throttleTime(1_000),
+        map(keyboardEvent => keyboardEvent.target as HTMLInputElement),
+        map(input => input.value),
+        distinctUntilChanged(),
+        // mergeMap(queryText => this.createTitleQuery(queryText))
+        switchMap(queryText => this.createTitleQuery<BookModel[]>(queryText))
+      )
+      .subscribe({
+        next: value => this.books = value,
+        error: err => console.log('Error: ' + err),
+        complete: () => console.log('Stream completed')
+      });
+  }
+
+  subjectsAndCustomOperators(): void {
+    setLoggingLevel(LoggingLevel.ERROR)
+
+    const subject = new ReplaySubject(4); // AsyncSubject<number>(); // ReplaySubject<number>(3); // BehaviorSubject<number>(0); // Subject<number>();
+    subject.next(1);
+    subject.next(2);
+    // subject.complete(); // required by AsyncSubject
+
+    subject
+      .pipe(
+        debug(LoggingLevel.INFO, 'Current value')
+      )
+      .subscribe({
+        next: value => console.log('Next value: ' + value),
+        error: err => console.log('Error: ' + err),
+        complete: () => console.log('Stream completed')
+      });
+
+    subject.next(3);
+
+    const observable = subject.asObservable();
+  }
+
+  errorHandlings(): void {
+    /*new Observable(observer => {
+     observer.next(1);
+     observer.next(2);
+     observer.error(new Error('description'));
+     // observer.complete();
+     observer.next(3);
+   })
+     .pipe(
+       // catchError(err => of(3,4))
+       // catchError(err => throwError(() => new Error('Other error'))),
+
+       // retry(3),
+       retry({count: 3, delay: 1_000}),
+
+       finalize(() => console.log("Task executed always"))
+
+     )
+     .subscribe({
+       next: value => console.log('Next value: ' + value),
+       error: err => console.log('Error: ' + err),
+       complete: () => console.log('Stream completed')
+     });*/
+
+    /*onErrorResumeNext(
+      of(1, 2, 3),
+      throwError(() => new Error()),
+      of(4, 5, 6)
+    )
+      .subscribe({
+        next: value => console.log('Next value: ' + value),
+        error: err => console.log('Error: ' + err),
+        complete: () => console.log('Stream completed')
+      });*/
+  }
+
+  operators(): void {
     const multiplyBy = (multiplier: number) => (value: number) => value * multiplier;
     const isEven = (value: number) => value % 2 === 0;
     const sum = (accumulator: number, currentValue: number) => accumulator + currentValue;
@@ -101,7 +201,7 @@ export class RxExamplesComponent implements AfterViewInit {
         next: value => console.log(value)
       });*/
 
-    /* interval(1_000)
+    /*interval(1_000)
        .pipe(
          combineLatestWith(interval(1_000))
        )
@@ -179,7 +279,7 @@ export class RxExamplesComponent implements AfterViewInit {
       error: err => console.log('Error: ' + err)
     });*/
 
-    fromEvent(this.queryInput.nativeElement, 'keyup')
+    /*fromEvent(this.queryInput.nativeElement, 'keyup')
       .pipe(
         debounceTime(500),
         //throttleTime(1_000),
@@ -193,8 +293,18 @@ export class RxExamplesComponent implements AfterViewInit {
       .subscribe({
         next: value => console.log(value),
         error: err => console.log('Error: ' + err)
-      });
+      });*/
 
+    /*of('http://localhost:3000/ids')
+      .pipe(
+        mergeMap(url => this.httpClient.get<number[]>(url)),
+        mergeMap(ids => ids),
+        mergeMap(id =>  this.httpClient.get<BookModel>(`/${id}`))
+      )
+      .subscribe({
+        next: value => console.log(value),
+        error: err => console.log('Error: ' + err)
+      });*/
   }
 
   createTitleQuery<T>(queryText: string): Observable<T> {

@@ -1,4 +1,4 @@
-import {AfterViewInit, Component, ElementRef, inject, ViewChild} from '@angular/core';
+import {AfterViewInit, Component, DestroyRef, ElementRef, inject, ViewChild} from '@angular/core';
 import {
   debounceTime,
   distinctUntilChanged,
@@ -8,25 +8,26 @@ import {
   Observable,
   of,
   ReplaySubject,
-  startWith, Subject,
   switchMap
 } from "rxjs";
 import {HttpClient} from "@angular/common/http";
 import {debug, LoggingLevel, setLoggingLevel} from "./debug.operator";
 import {BookModel} from "./book.model";
-import {AsyncPipe, NgForOf} from "@angular/common";
+import {AsyncPipe, NgForOf, NgIf} from "@angular/common";
+import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'app-rx-examples',
   standalone: true,
   imports: [
     AsyncPipe,
-    NgForOf
+    NgForOf,
+    NgIf
   ],
   templateUrl: './rx-examples.component.html',
   styleUrl: './rx-examples.component.css'
 })
-export class RxExamplesComponent implements AfterViewInit {
+export class RxExamplesComponent implements AfterViewInit/*, OnDestroy*/ {
 
   // Operators
 
@@ -72,27 +73,38 @@ export class RxExamplesComponent implements AfterViewInit {
 
   private httpClient = inject(HttpClient);
 
-  // books$!: Observable<BookModel[]>;
-  books: BookModel[] = [];
-  destroy$ = new Subject<void>();
+  books$!: Observable<BookModel[]>;
+  // books: BookModel[] = [];
+
+  //destroy$ = new Subject<void>();
+  destroyRef: DestroyRef = inject(DestroyRef);
 
   ngAfterViewInit(): void {
-    fromEvent(this.queryInput.nativeElement, 'keyup')
+    // if error occurs observable will end
+    this.books$ = fromEvent(this.queryInput.nativeElement, 'keyup')
       .pipe(
+        // takeUntil(this.destroy$), // closes subscription
+        takeUntilDestroyed(this.destroyRef),
         debounceTime(500),
-        //throttleTime(1_000),
         map(keyboardEvent => keyboardEvent.target as HTMLInputElement),
         map(input => input.value),
         distinctUntilChanged(),
-        // mergeMap(queryText => this.createTitleQuery(queryText))
         switchMap(queryText => this.createTitleQuery<BookModel[]>(queryText))
       )
-      .subscribe({
-        next: value => this.books = value,
-        error: err => console.log('Error: ' + err),
-        complete: () => console.log('Stream completed')
-      });
+      // .subscribe({
+      //   next: value => this.books = value,
+      //   error: err => console.log('Error: ' + err),
+      //   complete: () => console.log('Stream completed')
+      // });
   }
+
+  searchBooks(): void {
+    this.books$ = this.createTitleQuery(this.queryInput.nativeElement.value);
+  }
+
+  /*ngOnDestroy() {
+    this.destroy$.next();
+  }*/
 
   subjectsAndCustomOperators(): void {
     setLoggingLevel(LoggingLevel.ERROR)
@@ -133,7 +145,6 @@ export class RxExamplesComponent implements AfterViewInit {
        retry({count: 3, delay: 1_000}),
 
        finalize(() => console.log("Task executed always"))
-
      )
      .subscribe({
        next: value => console.log('Next value: ' + value),

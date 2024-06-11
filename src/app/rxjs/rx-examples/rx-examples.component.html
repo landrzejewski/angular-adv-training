@@ -2,6 +2,16 @@
 Books search: <input name="query" #search>
 
 <!--<div *ngFor="let book of books$ | async"> async provides unsubscribe automatuiclly-->
-<div *ngFor="let book of books">
-  {{book.title}}
+<!--<div *ngFor="let book of books">-->
+<div *ngIf="books$ | async as books; else loadingIndicator">
+  <div *ngFor="let book of books">
+    {{ book.title }}
+  </div>
 </div>
+<button (click)="searchBooks()">Serach</button>
+
+<ng-template #loadingIndicator>
+  <div>
+    Loading...
+  </div>
+</ng-template>

@@ -8,3 +8,9 @@ aplikacja powinna wyświetlać całkowity bilans w zakresie wybranych dat
 
 
 Użyj: NgRx do zarządzania stanem, sygnałów na poziomie komponentów widoku, skonfiguruj ssr. Nie skupiaj się na wyglądzie/części wizualnej
+
+
+https://justangular.com/blog/a-change-detection-zone-js-zoneless-local-change-detection-and-signals-story
+https://justangular.com/blog/a-new-era-for-angular-zoneless-change-detection
+
+https://blog.angular-university.io/angular-2-smart-components-vs-presentation-components-whats-the-difference-when-to-use-each-and-why/

@@ -14,3 +14,4 @@ https://justangular.com/blog/a-change-detection-zone-js-zoneless-local-change-de
 https://justangular.com/blog/a-new-era-for-angular-zoneless-change-detection
 
 https://blog.angular-university.io/angular-2-smart-components-vs-presentation-components-whats-the-difference-when-to-use-each-and-why/
+https://javascript.info

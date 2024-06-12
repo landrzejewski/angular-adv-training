@@ -1,11 +1,12 @@
-import {Component, input, model, output} from '@angular/core';
+import {ChangeDetectionStrategy, ChangeDetectorRef, Component, input, model, output} from '@angular/core';
 
 @Component({
   selector: 'app-ui-example',
   standalone: true,
   imports: [],
   templateUrl: './ui-example.component.html',
-  styleUrl: './ui-example.component.css'
+  styleUrl: './ui-example.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UiExampleComponent {
 
@@ -14,5 +15,12 @@ export class UiExampleComponent {
   outputValue = output<string>()
 
   twoWayValue = model<boolean>();
+
+  constructor(private ref: ChangeDetectorRef) {
+  }
+
+  test() {
+    this.ref.markForCheck();
+  }
 
 }

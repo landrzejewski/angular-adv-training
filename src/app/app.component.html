@@ -2,4 +2,5 @@
 <a routerLink="payments/payment">Payment</a>
 <button (click)="showConfirmation()">Show confirmation</button>
 <ng-container *ngComponentOutlet="confirmationView"></ng-container>
+<app-ui-example [value]="2" (outputValue)="onValueUpdated($event)"/>
 <router-outlet></router-outlet>

@@ -3,12 +3,13 @@ import {RouterLink, RouterOutlet} from '@angular/router';
 import {NgComponentOutlet} from "@angular/common";
 import {FakeAuthService} from "./security/fake-auth.service";
 import {AUTH_SERVICE} from "./di/tokens";
-import {isAuthenticated} from "./di/is-authenticated";
+import {SignalsExamplesService} from "./signals/signals-examples.service";
+import {UiExampleComponent} from "./signals/ui-example/ui-example.component";
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [RouterOutlet, RouterLink, NgComponentOutlet],
+  imports: [RouterOutlet, RouterLink, NgComponentOutlet, UiExampleComponent],
   providers: [
     {
       // provide: 'authService',
@@ -37,14 +38,20 @@ export class AppComponent {
   }*/
 
   private authService = inject(AUTH_SERVICE, {optional: true});
+  private signalsExamples = inject(SignalsExamplesService);
 
   constructor() {
     // console.log(isAuthenticated());
+    this.signalsExamples.test();
   }
 
   async showConfirmation() {
     this.confirmationView = await import('./payments/payment-confirmation/payment-confirmation.component')
       .then(component => component.PaymentConfirmationComponent)
+  }
+
+  onValueUpdated(value: string) {
+
   }
 
 }
